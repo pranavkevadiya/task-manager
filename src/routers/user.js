@@ -24,10 +24,11 @@ router.post('/user/login', async (req, res) => {
     try{
         const user = await User.findByCredentials(req.body.email, req.body.password)
         const token = await user.generateAuthToken()
+        await user.save()
         res.send({user, token})
     }
     catch(e){
-        res.status(500).send(e)
+        res.status(400).send(e)
     }
 });
 
@@ -117,6 +118,9 @@ router.get('/users/:id/avatar', async (req, res) => {
 router.delete('/users/me', auth, async (req, res) => {
     try{
         const deletedUser = await User.findByIdAndDelete(req.user._id)
+        if(!deletedUser){
+            res.send(401).send()
+        }
         sendCancellationEmail(deletedUser.email, deletedUser.name)
         res.send(deletedUser)
     }catch(e){
